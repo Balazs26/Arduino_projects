@@ -22,6 +22,10 @@ int LCD_D5 = 9;
 int LCD_D6 = 8;
 int LCD_D7 = 7;
 
+int BUZZER = 48;
+
+int noteTime = 500;
+
 
 LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
@@ -53,6 +57,20 @@ void setup() {
 
   lcd.begin(16,2);
   readYourCard();
+
+  pinMode(BUZZER, OUTPUT);
+
+}
+
+void openSound(){
+  tone(BUZZER, 2000, noteTime);
+}
+
+void deniedSound(){
+  for(int i=1; i<=3; i++){
+    tone(BUZZER, 1000, noteTime/3);
+    delay(noteTime/2);
+  }
 }
 
 
@@ -136,6 +154,7 @@ void loop() {
         if(!skipErrMsg) {
 
             Serial.println("Belepes megtagadva!");
+            deniedSound();
             lcd.setCursor(0,0);
             accessDenied();
             delay(openTime);
@@ -193,6 +212,8 @@ void OPEN(){
   Serial.println("Belepes engedelyezve!");
   lcd.setCursor(0,0);
   accessGranted();
+
+  openSound();
 
   digitalWrite(3, HIGH);
   delay(openTime);
