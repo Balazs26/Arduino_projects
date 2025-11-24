@@ -1,2 +1,2 @@
-# University_Programming
+# Personal
 Programok gyűjtőhelye.
