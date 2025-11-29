@@ -32,6 +32,8 @@ char k[4][4]={
 byte rpins[4]={2,3,4,5};
 byte cpins[4]={6,7,8,9};
 char key;
+
+bool drawerOpened = false;
   
 Keypad mypad (makeKeymap(k),rpins,cpins,4,4);
 LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
@@ -86,6 +88,7 @@ void setup()
   }
 
 void loop() {
+  Serial.println(digitalRead(BUTTON));
   key=mypad.getKey();
   if(key && Status == "CLOSED"){
     text = text + key;
@@ -115,13 +118,20 @@ void loop() {
       }
     }
   } else {
-    bool pushed = false;
-    if(Status == "OPEN" and digitalRead(BUTTON)){
+    
+    if(Status == "OPEN" && !digitalRead(BUTTON) && !drawerOpened){
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("FIOK NYITVA!");
-      pushed = true;
+      drawerOpened = true;
+    } else if(Status == "OPEN" && digitalRead(BUTTON) && drawerOpened){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("FIOK ZARVA!");
+      drawerOpened = false;
 
+      delay(2000);
+      lcd.clear();
     }
 
   }
