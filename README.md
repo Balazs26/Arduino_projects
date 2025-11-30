@@ -1,2 +1,2 @@
-# Personal
+# Arduino
 Programok gyűjtőhelye.
