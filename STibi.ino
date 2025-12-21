@@ -14,6 +14,8 @@ int noteTime = 500;
 int BUTTON = 44;
 
 int BUZZER = 22;
+int RELAY = 10;
+
 
 byte y = 0 ;
 byte z = 0 ;
@@ -52,8 +54,12 @@ void OPEN_DOOR(){
   lcd.print("BELEPES");
   lcd.setCursor(0, 1);
   lcd.print("ENGEDELYEZVE!");
+  
 
   tone(BUZZER, 2000, noteTime);
+  digitalWrite(RELAY, HIGH);
+  delay(openTime);
+  digitalWrite(RELAY, LOW);
 }
 
 void WRONG_PASSWORD(){
@@ -88,6 +94,7 @@ void setup()
     lcd.backlight();
     //lcd.begin(16,2);
     pinMode(BUZZER, OUTPUT);
+    pinMode(RELAY, OUTPUT);
 
     lcd.setCursor(0,0);
     lcd.print("ADD MEG A KODOT:");
