@@ -28,13 +28,13 @@ int LCD_D6 = 32;
 int LCD_D7 = 34;
 
 char k[4][4]={
-  {'1','2','3','A'},
-  {'4','5','6','B'},
-  {'7','8','9','C'},
-  {'*','0','#','D'}};
+  {'D','#','0','*'},
+  {'C','9','8','7'},
+  {'B','6','5','4'},
+  {'A','3','2','1'}};
 
-byte rpins[4]={2,3,4,5};
-byte cpins[4]={6,7,8,9};
+byte cpins[4]={2,3,4,5};
+byte rpins[4]={6,7,8,9};
 char key;
 
 bool drawerOpened = false;
@@ -101,7 +101,7 @@ void setup()
   }
 
 void loop() {
-  Serial.println(digitalRead(BUTTON));
+  // Serial.println(digitalRead(BUTTON));
   key=mypad.getKey();
   if(key && Status == "CLOSED"){
     text = text + key;
