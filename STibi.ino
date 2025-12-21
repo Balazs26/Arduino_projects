@@ -1,6 +1,8 @@
 #include <Key.h>
 #include <Keypad.h>
 #include <LiquidCrystal.h>
+#include <Wire.h> // I2C communication
+#include <LiquidCrystal_I2C.h> // LCD library
 
 String PASSWORD = "1245";
 String text;
@@ -36,8 +38,10 @@ char key;
 bool drawerOpened = false;
   
 Keypad mypad (makeKeymap(k),rpins,cpins,4,4);
-LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
+//LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 //LiquidCrystal lcd(LCD_RS, 12, 11, 6, 5, 4, 3);
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 void OPEN_DOOR(){
   Serial.println("BELEPES ENGEDELYEZVE!");
@@ -80,7 +84,9 @@ void setup()
    {
     pinMode(BUTTON, INPUT);
     Serial.begin(9600);
-    lcd.begin(16,2);
+    lcd.init();
+    lcd.backlight();
+    //lcd.begin(16,2);
     pinMode(BUZZER, OUTPUT);
 
     lcd.setCursor(0,0);
