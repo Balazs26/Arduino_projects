@@ -11,7 +11,7 @@ String Status = "CLOSED";
 int openTime = 3000;
 int noteTime = 500;
 
-int BUTTON = 44;
+int BUTTON = A5;
 
 int BUZZER = 22;
 int RELAY = 10;
