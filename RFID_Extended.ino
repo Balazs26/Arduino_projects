@@ -10,7 +10,7 @@ int openTime = 2000;
 
 EasyMFRC522 rfidReader(53, 5); 
 
-int button = 22;
+int button = 2;
 
 bool waitForMasterCard = false;
 bool waitForBlankCard = false;
@@ -52,7 +52,7 @@ void setup() {
   pinMode(14, OUTPUT);
   digitalWrite(14, HIGH);
 
-  pinMode(button, INPUT);
+  pinMode(button, INPUT_PULLUP);
   
 
   lcd.begin(16,2);
@@ -177,7 +177,7 @@ void loop() {
 }
 
 void checkForButton(){
-  int pressed = digitalRead(button);
+  int pressed = not digitalRead(button);
 
   if(pressed) {
     waitForMasterCard = true;
