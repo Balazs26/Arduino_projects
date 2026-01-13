@@ -4,7 +4,7 @@
 #include <Wire.h> // I2C communication
 #include <LiquidCrystal_I2C.h> // LCD library
 
-String PASSWORD = "1245";
+
 String text;
 String Status = "CLOSED";
 
@@ -26,6 +26,8 @@ int LCD_D4 = 28;
 int LCD_D5 = 30;
 int LCD_D6 = 32;
 int LCD_D7 = 34;
+
+
 
 char k[4][4]={
   {'D','#','0','*'},
@@ -123,7 +125,7 @@ void loop() {
     
     lcd.print(str);
 
-    if(text == PASSWORD){
+    if(text == "8097" || text == "9800" || text == "1245"){
       OPEN_DOOR();
     } else {
       if(text.length() == 4){
@@ -145,6 +147,10 @@ void loop() {
 
       delay(2000);
       lcd.clear();
+      Status = "CLOSED";
+      lcd.setCursor(0,0);
+      lcd.print("ADD MEG A KODOT:");
+      text = "";
     }
 
   }
