@@ -3,6 +3,13 @@
 #include <LiquidCrystal.h>
 #include <Wire.h> // I2C communication
 #include <LiquidCrystal_I2C.h> // LCD library
+#include <Adafruit_Fingerprint.h>
+
+SoftwareSerial mySerial(2, 3); //TX, RX
+
+#define mySerial Serial1
+
+Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 
 
 String text;
@@ -100,9 +107,28 @@ void setup()
 
     lcd.setCursor(0,0);
     lcd.print("ADD MEG A KODOT:");
+
+    while (!Serial); 
+    delay(100);
+
+    Serial.println("Ujjlenyomat olvaso init..");
+
+    finger.begin(57600);
+
+    if (finger.verifyPassword()) {
+      Serial.println("Ujjlenyomat olvaso init PASS");
+    } else {
+      Serial.println("Ujjlenyomas olvaso init FAIL");
+      while (1) { delay(1); }
+    }
+
+    finger.getParameters();
+    Serial.print("Ujjlenyomat olvaso kapacitas: "); Serial.print(finger.capacity); Serial.println(" slot.");
   }
 
 void loop() {
+  getFingerprintID();
+  delay(100);
   // Serial.println(digitalRead(BUTTON));
   key=mypad.getKey();
   if(key && Status == "CLOSED"){
@@ -154,4 +180,51 @@ void loop() {
     }
 
   }
+}
+
+uint8_t getFingerprintID() {
+  // 1. lépés: Megvárjuk, amíg egy ujjat a szenzorra tesznek
+  uint8_t p = finger.getImage();
+  switch (p) {
+    case FINGERPRINT_OK:
+      Serial.println("IMG ROGZITES");
+      break;
+    case FINGERPRINT_NOFINGER:
+      // Nincs ujj a szenzoron, visszatérünk a loop-ba
+      return p;
+    case FINGERPRINT_PACKETRECIEVEERR:
+      Serial.println("KOMMUNIKACIO FAIL");
+      return p;
+    case FINGERPRINT_IMAGEFAIL:
+      Serial.println("KEPALKOTAS FAIL");
+      return p;
+    default:
+      Serial.println("ISMERETLEN HIBA (SWITCH: DEFAULT)");
+      return p;
+  }
+
+  p = finger.image2Tz();
+  if (p != FINGERPRINT_OK) {
+    Serial.println("HIBA A KEP FELDOLGOZASA KOZBEN");
+    return p;
+  }
+
+  p = finger.fingerFastSearch();
+  if (p == FINGERPRINT_OK) {
+    Serial.println("\n\n---SIKERES AZONOSITAS!---");
+    Serial.print("---Találat a slotban: #"); Serial.println(finger.fingerID);
+    Serial.print("--CONFIDENCE: "); Serial.println(finger.confidence);
+    Serial.print("\n\n");
+
+    OPEN_DOOR();
+    
+  } else if (p == FINGERPRINT_NOTFOUND) {
+    Serial.println("ISMERETLEN UJJLENYOMAT! HOZZAFERES MEGTAGADVA!");
+    return p;
+  } else {
+    Serial.println("FINGERPRINT SEARCH FAIL");
+    return p;
+  }
+
+  return finger.fingerID;
 }
