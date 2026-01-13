@@ -1,8 +1,8 @@
 #include <Key.h>
-#include <Keypad.h>
+#include <Keypad.h> //Billentyűzet könyvtár
 #include <LiquidCrystal.h>
-#include <Wire.h> // I2C communication
-#include <LiquidCrystal_I2C.h> // LCD library
+#include <Wire.h> // I2C kommunikáció
+#include <LiquidCrystal_I2C.h> // LCD könyvtár
 #include <Adafruit_Fingerprint.h>
 
 SoftwareSerial mySerial(2, 3); //TX, RX
@@ -15,7 +15,7 @@ Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 String text;
 String Status = "CLOSED";
 
-int openTime = 3000;
+int openTime = 30000;
 int noteTime = 500;
 
 int BUTTON = A5;
