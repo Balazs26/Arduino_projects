@@ -1,32 +1,27 @@
  
 #include "EasyMFRC522.h"
 #include <LiquidCrystal.h>
-
-
 #define MAX_STRING_SIZE 100  
-#define BLOCK 1          
+#define BLOCK 1    
 
 int openTime = 2000;
-
-EasyMFRC522 rfidReader(53, 5); 
-
 int button = 2;
-
 bool waitForMasterCard = false;
 bool waitForBlankCard = false;
-
 int LCD_RS = 12;
 int LCD_ENABLE = 11;
 int LCD_D4 = 10;
 int LCD_D5 = 9;
 int LCD_D6 = 8;
 int LCD_D7 = 7;
-
 int BUZZER = 48;
-
 int noteTime = 500;
 
+bool readBlocking = false;
 
+
+
+EasyMFRC522 rfidReader(53, 5);
 LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 String removeQuotes(String input) {
@@ -39,6 +34,11 @@ String removeQuotes(String input) {
   return result;
 }
 
+void readBlock(int blockTime){
+  readBlocking = true;
+  delay(blockTime);
+  readBlocking = false;
+}
 
 void setup() {
   pinMode(13, OUTPUT);
@@ -46,20 +46,13 @@ void setup() {
   Serial.begin(9600);
   Serial.setTimeout(20000);
   rfidReader.init(); 
-
   pinMode(3, OUTPUT);
- 
   pinMode(14, OUTPUT);
   digitalWrite(14, HIGH);
-
   pinMode(button, INPUT_PULLUP);
-  
-
   lcd.begin(16,2);
-  readYourCard();
-
+  lcdWrite("OLVASD LE A", "KARTYAD");
   pinMode(BUZZER, OUTPUT);
-
 }
 
 void openSound(){
@@ -76,9 +69,6 @@ void deniedSound(){
 
 
 void loop() {
-
-  
-
   bool success;
   do {
     success = rfidReader.detectTag();    
@@ -87,31 +77,24 @@ void loop() {
       checkForButton();
     }
   } while (!success);
-
-  
   int result;
   char stringBuffer[MAX_STRING_SIZE];
-
   result = rfidReader.readFile(BLOCK, "mylabel", (byte*)stringBuffer, MAX_STRING_SIZE);
-
   stringBuffer[MAX_STRING_SIZE-1] = 0;
-
   bool skipUnknownMsg = false;
-
   if (result > 0) {
     bool skipErrMsg = false;
     bool skipEntrance = false;
-    
     String data;
     data = removeQuotes(stringBuffer);
-
     if(waitForMasterCard){
         skipEntrance = true;
         if(data != "MASTER"){
             waitForMasterCard = false;
-            readYourCard();
+            lcdWrite("OLVASD LE A", "KARTYAD");
             skipErrMsg = true;
             skipUnknownMsg = true;
+            readBlock(1000);
         }
     } else if(waitForBlankCard){
         if(removeQuotes(stringBuffer) != "MASTER") {
@@ -119,25 +102,25 @@ void loop() {
             skipErrMsg = true;
             write(1);
             skipUnknownMsg = true;
+            readBlock(1000);
 
         } else {
-            cloningDenied();
+            lcdWrite("KLONOZAS", "SIKERTELEN!");
             waitForMasterCard = false;
             waitForBlankCard = false;
             delay(3000);
             skipEntrance = true;
-            readYourCard();
+            lcdWrite("OLVASD LE A", "KARTYAD");
+            readBlock(1000);
         }
     }
-
-
 
     if(result >= 0 && (data == "OPEN" || data == "MASTER")) {
         if(waitForMasterCard) {
             if(data == "MASTER") {
                 waitForMasterCard = false;
                 waitForBlankCard = true;
-                readBlankCard();
+                lcdWrite("MASOLAS...", "UJ KARTYA");
             }
             skipEntrance = true;
         } else {
@@ -147,31 +130,25 @@ void loop() {
               }
             }
         }
-
-        
-
     } else {
         if(!skipErrMsg) {
-
             Serial.println("Belepes megtagadva!");
             deniedSound();
             lcd.setCursor(0,0);
-            accessDenied();
+            lcdWrite("BELEPES", "MEGTAGADVA!");
             delay(openTime);
             lcd.setCursor(0,0);
-            readYourCard();
+            lcdWrite("OLVASD LE A", "KARTYAD");
         }
     }
   } else if(success) {
     write(10);
     if(!skipUnknownMsg) {
-        unknownCard();
+        lcdWrite("ISMERETLEN", "KARTYA!");
         delay(openTime);
     }
-    readYourCard();
+    lcdWrite("OLVASD LE A", "KARTYAD");
   }
-
-
   rfidReader.unselectMifareTag();
   delay(100);
 }
@@ -181,107 +158,57 @@ void checkForButton(){
 
   if(pressed) {
     waitForMasterCard = true;
-    readMasterCard();
+    lcdWrite("OLVASD LE A", "MASTERT!");
   }
 }
 
 void write(int a){
-    
     char writeStringBuffer[100];
     int result;
     if(a == 10) {
       strcpy(writeStringBuffer, "10");
     } else if(a == 1) {
       strcpy(writeStringBuffer, "OPEN");
-    }
+      lcdWrite("KLONOZAS", "SIKERES!");
       
+    }
     int stringSize = strlen(writeStringBuffer);
     
-    // starting from tag's block #1, writes a data chunk labeled "mylabel", with its content given by stringBuffer, of stringSize+1 bytes (because of the trailing 0 in strings) 
     result = rfidReader.writeFile(BLOCK, "mylabel", (byte*)writeStringBuffer, stringSize+1);
 
-    cloningSuccess();
-    delay(3000);
+    if(a == 1){
+      delay(3000);
+    }
+    
 
     waitForMasterCard = false;
     waitForBlankCard = false;
-    readYourCard();
+    lcdWrite("OLVASD LE A", "KARTYAD");
+    readBlock(1000);
 }
 
 void OPEN(){
   Serial.println("Belepes engedelyezve!");
   lcd.setCursor(0,0);
-  accessGranted();
-
+  lcdWrite("BELEPES", "ENGEDELYEZVE!");
   openSound();
-
   digitalWrite(3, HIGH);
   delay(openTime);
   digitalWrite(3, LOW);
   lcd.setCursor(0,0);
-  readYourCard();
+  lcdWrite("OLVASD LE A", "KARTYAD");
 }
 
-void readMasterCard() {
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("OLVASD LE A");
-    lcd.setCursor(0, 1);
-    lcd.print("MASTERT!");
-}
-
-void readYourCard(){
+void lcdWrite(String line1, String line2){
   lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print("OLVASD LE A");
-  lcd.setCursor(0, 1);
-  lcd.print("KARTYAD!");
-}
 
-void accessGranted(){
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print("BELEPES");
-  lcd.setCursor(0,1);
-  lcd.print("ENGEDELYEZVE!");
-}
+  if(line1){
+    lcd.setCursor(0, 0);
+    lcd.print(line1);
+  }
 
-void accessDenied(){
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print("BELEPES");
-  lcd.setCursor(0,1);
-  lcd.print("MEGTAGADVA!");
-}
-
-void unknownCard(){
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print("ISMERETLEN");
-  lcd.setCursor(0,1);
-  lcd.print("KARTYA!");
-}
-
-void readBlankCard() {
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("MASOLAS...");
+  if(line2){
     lcd.setCursor(0, 1);
-    lcd.print("UJ KARTYA:");
-}
-
-void cloningDenied(){
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("KLONOZAS");
-    lcd.setCursor(0, 1);
-    lcd.print("SIKERTELEN!");
-}
-
-void cloningSuccess(){
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("KLONOZAS");
-    lcd.setCursor(0, 1);
-    lcd.print("SIKERES!");
+    lcd.print(line2);
+  }
 }
